@@ -11,6 +11,70 @@ The active wire protocol is V3:
 - Modes: `A` active, `H` hold, `M` home
 - Six absolute servo angles: base, p1, p2, p3, roll, gripper
 
+## Project Structure
+
+### Root Directory
+* `README.md` - Complete information about this project (this file).
+* `CMakeLists.txt` - Build system configuration for the Zephyr firmware.
+* `prj.conf` - Main Zephyr project configuration file defining Kconfig options.
+* `app.overlay` - Device tree overlay for the ESP32 board, configuring hardware peripherals.
+* `.gitignore` / `.gitattributes` - Git configuration files.
+* `build/` - Zephyr build artifacts (generated).
+* `src/` - Firmware C source code for the ESP32 controller.
+* `gesture_teleop/` - Python-based gesture teleoperation, UI, and API host.
+
+### `src/` (ESP32 Zephyr Firmware)
+* `main.c` - Entry point for the firmware; handles system initialization and starts threads.
+* `app_callbacks.c` / `.h` - Application-specific callbacks for network events (WiFi, WebSocket).
+* `servo_control.c` / `.h` - Core logic for moving the robot arm, implementing motion profiles (S-curve, min-jerk).
+* `servo.c` / `.h` - Low-level driver for controlling PCA9685 I2C PWM servo controller.
+* `tcp_transport.c` / `.h` - Raw TCP socket listener and packet processor.
+* `websocket_layer.c` / `.h` - WebSocket server implementation for browser and API clients.
+* `wifi_manager.c` / `.h` - Connects the ESP32 to the WiFi network and manages reconnection states.
+* `wifi_credentials.example.h` - Template for defining `WIFI_SSID` and `WIFI_PASS`.
+* `wifi_credentials.local.h` - (Ignored in Git) User-specific WiFi credentials.
+
+### `gesture_teleop/` (Python Host & UI)
+* `main.py` - Main entry point for the gesture teleop UI and control loop.
+* `test_pipeline.py` - Script to test the MediaPipe vision pipeline in isolation.
+* `motion_test.py` - Repeatable large-move test for judging smoothness on the real arm.
+* `read_servo_angles.py` - Utility to read target servo angles directly via serial port.
+* `two_hand_control.py` - Core logic for the two-hand control scheme mapping hand gestures to robot joints.
+* `ps3_joystick.py` - PS3 joystick driver and integration for hardware teleoperation fallback.
+* `hand_mapping.py` - Legacy or specific single-hand mapping definitions.
+* `vision.py` - Handles MediaPipe pose estimation and camera feed capture.
+* `filters.py` - Mathematical filters (like One-Euro) for smoothing hand landmarks to prevent jitter.
+* `protocol.py` - V3 packet definitions for packing/unpacking binary frames sent to the arm.
+* `transport.py` - `TransportPump` thread handling reliable packet delivery (TCP/WebSocket).
+* `http_comm.py` - HTTP request handlers for firmware communication (legacy/testing).
+* `ui_overlay.py` - OpenCV drawing functions for skeletons, status chips, and connection info.
+* `calibration.py` / `config.py` - Load and manage system configurations.
+* `requirements.txt` - Python package dependencies.
+* `FIRMWARE_CONTRACT.md` - Documentation of the firmware-host communication protocol.
+* `cropped-agnisys-logo-1-2 (1).png` - UI asset.
+
+### `gesture_teleop/config/`
+* `calibration.json` - Extensive JSON configuration containing camera settings, motion limits, and calibration constants.
+
+### `gesture_teleop/api/` (FastAPI Middleware)
+* `main.py` - Entry point for the FastAPI server acting as middleware.
+* `MIGRATION.md` - Documentation for migrating clients/services.
+* `requirements.txt` - API-specific dependencies.
+* `config.py` - API configuration settings.
+* `routes/`
+  * `robot.py` - API endpoints for robot control.
+  * `gesture.py` - API endpoints for gesture control settings.
+  * `calibration.py` - API endpoints to update calibration.
+  * `status.py` - Endpoints to query the system status.
+* `services/`
+  * `robot_service.py` - Business logic bridging API endpoints to the robot hardware/protocol.
+  * `websocket_service.py` - Persistent WebSocket connection manager handling network instability and reconnection.
+* `models/`
+  * `robot_models.py` - Pydantic models for robot requests/responses.
+  * `gesture_models.py` - Pydantic models for gesture validation.
+* `utils/`
+  * `protocol.py` - Protocol packer utility for the API.
+
 ## Firmware
 
 From a Zephyr shell with this folder as the app:
