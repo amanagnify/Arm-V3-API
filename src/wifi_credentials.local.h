@@ -1,0 +1,8 @@
+﻿#ifndef WIFI_CREDENTIALS_LOCAL_H
+#define WIFI_CREDENTIALS_LOCAL_H
+
+#define WIFI_MGR_SSID "Robotics-2.4G"
+#define WIFI_MGR_PSK "C0nnect@806"
+
+#endif /* WIFI_CREDENTIALS_LOCAL_H */
+
